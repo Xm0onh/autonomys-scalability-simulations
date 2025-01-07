@@ -8,6 +8,7 @@ const N: usize = 10000; // Total nodes
 const F: usize = 2000;  // Malicious nodes
 const M: usize = 10;  // Nodes voting per block
 const K: usize = 150;   // Confirmation depth
+const K_F: usize = 14000; // Start block number for malicious nodes to gain power
 const T: usize = 15000;  // Number of blocks
 
 #[derive(Debug, Clone)]
@@ -45,7 +46,7 @@ fn main() {
         // Vote on unconfirmed blobs
         for &blob_id in &unconfirmed_blobs {
             for &node in &selected_nodes {
-                if honest_nodes.contains(&node) {
+                if honest_nodes.contains(&node) && block < K_F {
                     blobs.get_mut(&blob_id).unwrap().votes_honest += 1;
                 } else if malicious_nodes.contains(&node) {
                     blobs.get_mut(&blob_id).unwrap().votes_malicious += 1;
@@ -66,7 +67,6 @@ fn main() {
     writeln!(file, "blob_id,total_votes,honest_votes,malicious_votes,confirmed").expect("Unable to write header");
     for (_, blob) in &blobs {
         if blob.id > blobs.len() - K {
-            println!("blob {} is", blob.id);
             continue;
         }
         writeln!(
