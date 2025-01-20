@@ -6,3 +6,4 @@ venv
 
 config.toml
 *.txt
+results/
