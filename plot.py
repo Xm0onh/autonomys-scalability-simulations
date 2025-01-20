@@ -1,82 +1,53 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
 import numpy as np
 
+# Read the CSV file
 df = pd.read_csv('simulation_results.csv')
 
-fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(15, 12))
+# Create figure
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 12))
 
-window = 100  
-df['honest_ma'] = df['honest_votes'].rolling(window=window).mean()
-df['malicious_ma'] = df['malicious_votes'].rolling(window=window).mean()
+# Plot 1: Votes per block
+block_stats = df.groupby('block_number').agg({
+    'blob_id': 'count',
+    'votes': lambda x: x.str.count('1').mean()  # Average positive votes
+}).reset_index()
 
-ax1.plot(df['blob_id'], df['honest_ma'], 
-         label=f'Honest Votes (MA-{window})', color='green', linewidth=2)
-ax1.plot(df['blob_id'], df['malicious_ma'], 
-         label=f'Malicious Votes (MA-{window})', color='red', linewidth=2)
-
-ax1.plot(df['blob_id'], df['honest_votes'], 
-         color='lightgreen', alpha=0.2, linewidth=0.5)
-ax1.plot(df['blob_id'], df['malicious_votes'], 
-         color='lightcoral', alpha=0.2, linewidth=0.5)
-
-ax1.set_xlabel('Blob ID')
-ax1.set_ylabel('Number of Votes')
-ax1.set_title('Voting Pattern: Moving Average of Honest vs Malicious Nodes')
+ax1.plot(block_stats['block_number'], block_stats['votes'], 
+         label='Average Positive Votes', color='blue')
+ax1.set_xlabel('Block Number')
+ax1.set_ylabel('Average Number of Positive Votes')
+ax1.set_title('Voting Pattern Over Blocks')
 ax1.legend()
 ax1.grid(True, linestyle='--', alpha=0.7)
 
-data_to_plot = [df['honest_votes'], df['malicious_votes']]
-box = ax2.boxplot(data_to_plot, 
-                  tick_labels=['Honest Votes', 'Malicious Votes'],
-                  patch_artist=True)
+# Plot 2: Distribution of votes
+df['positive_votes'] = df['votes'].str.count('1')
+df['total_possible'] = df['votes'].str.len()
+df['vote_ratio'] = df['positive_votes'] / df['total_possible']
 
-colors = ['lightgreen', 'lightcoral']
-for patch, color in zip(box['boxes'], colors):
-    patch.set_facecolor(color)
-
-ax2.set_ylabel('Number of Votes')
-ax2.set_title('Vote Distribution Statistics')
+sns.boxplot(y=df['vote_ratio'], ax=ax2)
+ax2.set_ylabel('Ratio of Positive Votes')
+ax2.set_title('Distribution of Vote Ratios')
 ax2.grid(True, linestyle='--', alpha=0.7)
 
 plt.tight_layout()
 plt.savefig('voting_pattern_analysis.png', dpi=300, bbox_inches='tight')
 plt.close()
 
-print("\nDetailed Statistics:")
+# Print statistics
+print("\nVoting Statistics:")
+print(f"Total Blocks: {df['block_number'].nunique()}")
+print(f"Total Blobs: {len(df)}")
+print(f"Average Blobs per Block: {len(df) / df['block_number'].nunique():.2f}")
 
-print("\nMean Total Votes:")
-print(f"Mean: {df['total_votes'].mean():.2f}")
-print(f"Median: {df['total_votes'].median():.2f}")
-print(f"Std Dev: {df['total_votes'].std():.2f}")
-print(f"Min: {df['total_votes'].min()}")
-print(f"Max: {df['total_votes'].max()}")
+print("\nVote Distribution:")
+print(f"Average Positive Votes per Blob: {df['positive_votes'].mean():.2f}")
+print(f"Median Positive Votes per Blob: {df['positive_votes'].median():.2f}")
+print(f"Std Dev of Positive Votes: {df['positive_votes'].std():.2f}")
 
-print("\nHonest Votes:")
-print(f"Mean: {df['honest_votes'].mean():.2f}")
-print(f"Median: {df['honest_votes'].median():.2f}")
-print(f"Std Dev: {df['honest_votes'].std():.2f}")
-print(f"Min: {df['honest_votes'].min()}")
-print(f"Max: {df['honest_votes'].max()}")
-
-print("\nMalicious Votes:")
-print(f"Mean: {df['malicious_votes'].mean():.2f}")
-print(f"Median: {df['malicious_votes'].median():.2f}")
-print(f"Std Dev: {df['malicious_votes'].std():.2f}")
-print(f"Min: {df['malicious_votes'].min()}")
-print(f"Max: {df['malicious_votes'].max()}")
-
-print(f"\nTotal blobs: {len(df)}")
-print(f"Confirmed blobs: {df['confirmed'].sum()}")
-
-print("\nBlock Proposer Statistics:")
-honest_blocks = df[df['proposer_status'] == 'honest']
-malicious_blocks = df[df['proposer_status'] == 'malicious']
-
-print(f"\nHonest Proposers:")
-print(f"Count: {len(honest_blocks)} blocks")
-print(f"Percentage: {(len(honest_blocks) / len(df) * 100):.2f}%")
-
-print(f"\nMalicious Proposers:")
-print(f"Count: {len(malicious_blocks)} blocks")
-print(f"Percentage: {(len(malicious_blocks) / len(df) * 100):.2f}%")
+print("\nVote Ratios:")
+print(f"Average Ratio of Positive Votes: {df['vote_ratio'].mean():.2%}")
+print(f"Median Ratio of Positive Votes: {df['vote_ratio'].median():.2%}")

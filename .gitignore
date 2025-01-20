@@ -5,3 +5,4 @@ venv
 *.png
 
 config.toml
+*.txt
