@@ -88,12 +88,11 @@ fn main() {
             .choose_multiple(&mut rng, config.nodes_per_block)
             .cloned()
             .collect();
-
-        let reliable_nodes = reliable_nodes(&honest_nodes, config.reliable_nodes);
+        // let reliable_nodes = reliable_nodes(&honest_nodes, config.reliable_nodes);
 
         for &blob_id in &unconfirmed_blobs {
             for &node in &selected_nodes {
-                if honest_nodes.contains(&node) && block < (config.confirmation_depth - config.malicious_power_block) {
+                if honest_nodes.contains(&node) {
                     blobs.get_mut(&blob_id).unwrap().votes_honest += 1;
                 } else if malicious_nodes.contains(&node) {
                     blobs.get_mut(&blob_id).unwrap().votes_malicious += 1;
@@ -117,9 +116,12 @@ fn main() {
         "blob_id,total_votes,honest_votes,malicious_votes,confirmed,proposer_status"
     )
     .expect("Unable to write header");
-    // size of the blobs
-    println!("Size of the blobs: {}", blobs.len());
-    for (_, blob) in &blobs {
+    
+    // Convert HashMap entries to Vec and sort by blob_id
+    let mut sorted_blobs: Vec<_> = blobs.iter().collect();
+    sorted_blobs.sort_by_key(|&(id, _)| id);
+
+    for (_, blob) in sorted_blobs {
         writeln!(
             file,
             "{},{},{},{},{},{}",

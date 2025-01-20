@@ -44,6 +44,14 @@ plt.savefig('voting_pattern_analysis.png', dpi=300, bbox_inches='tight')
 plt.close()
 
 print("\nDetailed Statistics:")
+
+print("\nMean Total Votes:")
+print(f"Mean: {df['total_votes'].mean():.2f}")
+print(f"Median: {df['total_votes'].median():.2f}")
+print(f"Std Dev: {df['total_votes'].std():.2f}")
+print(f"Min: {df['total_votes'].min()}")
+print(f"Max: {df['total_votes'].max()}")
+
 print("\nHonest Votes:")
 print(f"Mean: {df['honest_votes'].mean():.2f}")
 print(f"Median: {df['honest_votes'].median():.2f}")
