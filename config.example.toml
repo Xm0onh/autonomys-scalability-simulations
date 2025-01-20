@@ -1,0 +1,8 @@
+# Copy this file to config.toml and adjust values as needed
+total_nodes = 10000
+malicious_nodes = 2000
+nodes_per_block = 10
+confirmation_depth = 100
+malicious_power_block = 0
+total_blocks = 100
+reliable_nodes = 1000 

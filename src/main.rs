@@ -2,15 +2,27 @@ use rand::seq::SliceRandom;
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io::Write;
+use serde::Deserialize;
 
-// Parameters
-const N: usize = 10000; // Total nodes
-const F: usize = 2000; // Malicious nodes
-const M: usize = 10; // Nodes voting per block
-const K: usize = 150; // Confirmation depth
-const K_F: usize = 14000; // Start block number for malicious nodes to gain power
-const T: usize = 15000; // Number of blocks
-const EPSILON: usize = 1000; // Number of reliable nodes
+#[derive(Debug, Deserialize)]
+struct Settings {
+    total_nodes: usize,
+    malicious_nodes: usize,
+    nodes_per_block: usize,
+    confirmation_depth: usize,
+    malicious_power_block: usize,
+    total_blocks: usize,
+    reliable_nodes: usize,
+}
+
+fn load_config() -> Settings {
+    config::Config::builder()
+        .add_source(config::File::with_name("config"))
+        .build()
+        .unwrap()
+        .try_deserialize()
+        .unwrap()
+}
 
 #[derive(Debug, Clone)]
 struct Blob {
@@ -31,18 +43,20 @@ fn reliable_nodes(all_nodes: &HashSet<usize>, num_nodes: usize) -> HashSet<usize
         .collect()
 }
 
+#[allow(unused_variables)]
 fn main() {
+    let config = load_config();
     let mut rng = rand::thread_rng();
 
-    let honest_nodes: HashSet<usize> = (0..(N - F)).collect();
-    let malicious_nodes: HashSet<usize> = ((N - F)..N).collect();
-    let all_nodes: HashSet<usize> = (0..N).collect();
+    let honest_nodes: HashSet<usize> = (0..(config.total_nodes - config.malicious_nodes)).collect();
+    let malicious_nodes: HashSet<usize> = ((config.total_nodes - config.malicious_nodes)..config.total_nodes).collect();
+    let all_nodes: HashSet<usize> = (0..config.total_nodes).collect();
 
     let mut blobs: HashMap<usize, Blob> = HashMap::new();
     let mut unconfirmed_blobs: HashSet<usize> = HashSet::new();
     let mut next_blob_id = 0;
 
-    for block in 1..=T {
+    for block in 1..=config.total_blocks {
         let new_blob = Blob {
             id: next_blob_id,
             votes_honest: 0,
@@ -57,15 +71,15 @@ fn main() {
             .iter()
             .cloned()
             .collect::<Vec<_>>()
-            .choose_multiple(&mut rng, M)
+            .choose_multiple(&mut rng, config.nodes_per_block)
             .cloned()
             .collect();
 
-        let reliable_nodes = reliable_nodes(&honest_nodes, EPSILON);
+        let reliable_nodes = reliable_nodes(&honest_nodes, config.reliable_nodes);
 
         for &blob_id in &unconfirmed_blobs {
             for &node in &selected_nodes {
-                if honest_nodes.contains(&node) && reliable_nodes.contains(&node) && block < K_F {
+                if honest_nodes.contains(&node) && block < (config.confirmation_depth - config.malicious_power_block) {
                     blobs.get_mut(&blob_id).unwrap().votes_honest += 1;
                 } else if malicious_nodes.contains(&node) {
                     blobs.get_mut(&blob_id).unwrap().votes_malicious += 1;
@@ -73,8 +87,8 @@ fn main() {
             }
         }
 
-        if block >= K {
-            let confirmed_blob_id = block - K;
+        if block >= config.confirmation_depth {
+            let confirmed_blob_id = block - config.confirmation_depth;
             if let Some(blob) = blobs.get_mut(&confirmed_blob_id) {
                 blob.is_confirmed = true;
                 unconfirmed_blobs.remove(&confirmed_blob_id);
@@ -89,10 +103,9 @@ fn main() {
         "blob_id,total_votes,honest_votes,malicious_votes,confirmed"
     )
     .expect("Unable to write header");
+    // size of the blobs
+    println!("Size of the blobs: {}", blobs.len());
     for (_, blob) in &blobs {
-        if blob.id > blobs.len() - K {
-            continue;
-        }
         writeln!(
             file,
             "{},{},{},{},{}",
