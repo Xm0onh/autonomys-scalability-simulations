@@ -28,7 +28,7 @@ ax1.grid(True, linestyle='--', alpha=0.7)
 
 data_to_plot = [df['honest_votes'], df['malicious_votes']]
 box = ax2.boxplot(data_to_plot, 
-                  labels=['Honest Votes', 'Malicious Votes'],
+                  tick_labels=['Honest Votes', 'Malicious Votes'],
                   patch_artist=True)
 
 colors = ['lightgreen', 'lightcoral']
@@ -60,3 +60,15 @@ print(f"Max: {df['malicious_votes'].max()}")
 
 print(f"\nTotal blobs: {len(df)}")
 print(f"Confirmed blobs: {df['confirmed'].sum()}")
+
+print("\nBlock Proposer Statistics:")
+honest_blocks = df[df['proposer_status'] == 'honest']
+malicious_blocks = df[df['proposer_status'] == 'malicious']
+
+print(f"\nHonest Proposers:")
+print(f"Count: {len(honest_blocks)} blocks")
+print(f"Percentage: {(len(honest_blocks) / len(df) * 100):.2f}%")
+
+print(f"\nMalicious Proposers:")
+print(f"Count: {len(malicious_blocks)} blocks")
+print(f"Percentage: {(len(malicious_blocks) / len(df) * 100):.2f}%")

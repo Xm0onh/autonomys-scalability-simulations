@@ -23,13 +23,13 @@ fn load_config() -> Settings {
         .try_deserialize()
         .unwrap()
 }
-
 #[derive(Debug, Clone)]
 struct Blob {
     id: usize,
     votes_honest: usize,
     votes_malicious: usize,
     is_confirmed: bool,
+    proposer_status: String 
 }
 
 fn reliable_nodes(all_nodes: &HashSet<usize>, num_nodes: usize) -> HashSet<usize> {
@@ -57,12 +57,26 @@ fn main() {
     let mut next_blob_id = 0;
 
     for block in 1..=config.total_blocks {
-        let new_blob = Blob {
-            id: next_blob_id,
-            votes_honest: 0,
-            votes_malicious: 0,
-            is_confirmed: false,
-        };
+        let nodes_vec: Vec<_> = all_nodes.iter().cloned().collect();
+        let block_proposer = nodes_vec.choose(&mut rng).unwrap();
+        let new_blob: Blob;
+        if malicious_nodes.contains(block_proposer) {
+            new_blob = Blob {
+                id: next_blob_id,
+                votes_honest: 0,
+                votes_malicious: 0,
+                is_confirmed: false,
+                proposer_status: "malicious".to_string(),
+            };
+        } else {
+            new_blob = Blob {
+                id: next_blob_id,
+                votes_honest: 0,
+                votes_malicious: 0,
+                is_confirmed: false,
+                proposer_status: "honest".to_string(),
+            };
+        }
         blobs.insert(next_blob_id, new_blob.clone());
         unconfirmed_blobs.insert(next_blob_id);
         next_blob_id += 1;
@@ -100,7 +114,7 @@ fn main() {
     let mut file = File::create("simulation_results.csv").expect("Unable to create file");
     writeln!(
         file,
-        "blob_id,total_votes,honest_votes,malicious_votes,confirmed"
+        "blob_id,total_votes,honest_votes,malicious_votes,confirmed,proposer_status"
     )
     .expect("Unable to write header");
     // size of the blobs
@@ -108,12 +122,13 @@ fn main() {
     for (_, blob) in &blobs {
         writeln!(
             file,
-            "{},{},{},{},{}",
+            "{},{},{},{},{},{}",
             blob.id,
             blob.votes_honest + blob.votes_malicious,
             blob.votes_honest,
             blob.votes_malicious,
-            blob.is_confirmed
+            blob.is_confirmed,
+            blob.proposer_status
         )
         .expect("Unable to write row");
     }
