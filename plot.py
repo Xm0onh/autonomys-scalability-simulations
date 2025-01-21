@@ -35,7 +35,7 @@ def read_and_parse_data(filename):
     
     return pd.DataFrame(data)
 
-def plot_honest_vs_malicious(df, output_dir):
+def plot_honest_vs_malicious_per_block(df, output_dir):
     fig, ax = plt.subplots(figsize=(15, 8))
     block_votes = df.groupby('block_number').agg({
         'honest_votes': 'sum',
@@ -53,9 +53,9 @@ def plot_honest_vs_malicious(df, output_dir):
     ax.set_title('Total Votes per Block')
     ax.legend()
     ax.grid(True, linestyle='--', alpha=0.7)
-    save_plot(fig, os.path.join(output_dir, 'honest_malicious_votes.png'))
+    save_plot(fig, os.path.join(output_dir, 'honest_malicious_votes_per_block.png'))
 
-def plot_yes_no_votes(df, output_dir):
+def plot_yes_no_votes_per_block(df, output_dir):
     fig, ax = plt.subplots(figsize=(15, 8))
     vote_columns = [col for col in df.columns if col.startswith('vote_')]
     
@@ -78,7 +78,7 @@ def plot_yes_no_votes(df, output_dir):
     ax.set_title('Yes/No Votes per Block')
     ax.legend()
     ax.grid(True, linestyle='--', alpha=0.7)
-    save_plot(fig, os.path.join(output_dir, 'yes_no_votes.png'))
+    save_plot(fig, os.path.join(output_dir, 'yes_no_votes_per_block.png'))
 
 def plot_vote_distribution(df, output_dir):
     fig, ax = plt.subplots(figsize=(10, 8))
@@ -123,6 +123,51 @@ def plot_voting_pattern_heatmap(df, output_dir, num_blobs=100):
     ax.set_ylabel('Blob ID')
     ax.set_title(f'Voting Pattern Heatmap (First {num_blobs} Blobs)')
     save_plot(fig, os.path.join(output_dir, 'voting_pattern_heatmap.png'))
+
+def plot_honest_vs_malicious_per_blob(df, output_dir):
+    fig, ax = plt.subplots(figsize=(15, 8))
+    blob_votes = df.groupby('blob_id').agg({
+        'honest_votes': 'sum',
+        'malicious_votes': 'sum'
+    }).reset_index()
+    
+    blob_votes['total_votes'] = blob_votes['honest_votes'] + blob_votes['malicious_votes']
+    
+    for col, color in [('honest_votes', 'green'), ('malicious_votes', 'red'), ('total_votes', 'blue')]:
+        ax.plot(blob_votes['blob_id'], blob_votes[col], 
+                label=col.replace('_', ' ').title(), color=color, marker='o')
+    
+    ax.set_xlabel('Blob ID')
+    ax.set_ylabel('Number of Votes')
+    ax.set_title('Total Votes per Blob')
+    ax.legend()
+    ax.grid(True, linestyle='--', alpha=0.7)
+    save_plot(fig, os.path.join(output_dir, 'honest_malicious_votes_per_blob.png'))
+
+def plot_yes_no_votes_per_blob(df, output_dir):
+    fig, ax = plt.subplots(figsize=(15, 8))
+    vote_columns = [col for col in df.columns if col.startswith('vote_')]
+    
+    df['yes_votes'] = df[vote_columns].apply(lambda x: (x == 1).sum(), axis=1)
+    df['no_votes'] = df[vote_columns].apply(lambda x: (x == 0).sum(), axis=1)
+    
+    yes_no_votes = df.groupby('blob_id').agg({
+        'yes_votes': 'sum',
+        'no_votes': 'sum'
+    }).reset_index()
+    
+    yes_no_votes['total_votes'] = yes_no_votes['yes_votes'] + yes_no_votes['no_votes']
+    
+    for col, color in [('yes_votes', 'green'), ('no_votes', 'red'), ('total_votes', 'blue')]:
+        ax.plot(yes_no_votes['blob_id'], yes_no_votes[col], 
+                label=col.replace('_', ' ').title(), color=color, marker='o')
+    
+    ax.set_xlabel('Blob ID')
+    ax.set_ylabel('Number of Votes')
+    ax.set_title('Yes/No Votes per Blob')
+    ax.legend()
+    ax.grid(True, linestyle='--', alpha=0.7)
+    save_plot(fig, os.path.join(output_dir, 'yes_no_votes_per_blob.png'))
 
 def print_statistics(df):
     blob_stats = df.groupby('blob_id').agg({
@@ -187,6 +232,65 @@ def print_stats_summary(blob_stats, block_stats, df, vote_columns, vote_corr):
     print("\nVote Correlation Summary:")
     print(f"Average Correlation between Voters: {vote_corr.mean().mean():.3f}")
 
+def plot_honest_vs_malicious_per_block_avg(df, output_dir):
+    fig, ax = plt.subplots(figsize=(15, 8))
+    block_votes = df.groupby('block_number').agg({
+        'honest_votes': 'sum',
+        'malicious_votes': 'sum'
+    }).reset_index()
+    
+    block_votes['total_votes'] = block_votes['honest_votes'] + block_votes['malicious_votes']
+    
+    # Calculate rolling averages
+    window = 10  # Adjust window size as needed
+    for col, color in [('honest_votes', 'green'), ('malicious_votes', 'red'), ('total_votes', 'blue')]:
+        # Plot scattered points with low alpha
+        ax.scatter(block_votes['block_number'], block_votes[col], 
+                  color=color, alpha=0.2, s=20)
+        # Plot rolling average line
+        rolling_avg = block_votes[col].rolling(window=window, center=True).mean()
+        ax.plot(block_votes['block_number'], rolling_avg,
+                label=col.replace('_', ' ').title(), color=color, linewidth=2)
+    
+    ax.set_xlabel('Block Number')
+    ax.set_ylabel('Number of Votes')
+    ax.set_title('Total Votes per Block (Rolling Average)')
+    ax.legend()
+    ax.grid(True, linestyle='--', alpha=0.7)
+    save_plot(fig, os.path.join(output_dir, 'honest_malicious_votes_per_block_avg.png'))
+
+def plot_yes_no_votes_per_block_avg(df, output_dir):
+    fig, ax = plt.subplots(figsize=(15, 8))
+    vote_columns = [col for col in df.columns if col.startswith('vote_')]
+    
+    df['yes_votes'] = df[vote_columns].apply(lambda x: (x == 1).sum(), axis=1)
+    df['no_votes'] = df[vote_columns].apply(lambda x: (x == 0).sum(), axis=1)
+    
+    yes_no_votes = df.groupby('block_number').agg({
+        'yes_votes': 'sum',
+        'no_votes': 'sum'
+    }).reset_index()
+    
+    yes_no_votes['total_votes'] = yes_no_votes['yes_votes'] + yes_no_votes['no_votes']
+    
+    # Calculate rolling averages
+    window = 5  # Adjust window size as needed
+    for col, color in [('yes_votes', 'green'), ('no_votes', 'red'), ('total_votes', 'blue')]:
+        # Plot scattered points with low alpha
+        ax.scatter(yes_no_votes['block_number'], yes_no_votes[col],
+                  color=color, alpha=0.2, s=20)
+        # Plot rolling average line
+        rolling_avg = yes_no_votes[col].rolling(window=window, center=True).mean()
+        ax.plot(yes_no_votes['block_number'], rolling_avg,
+                label=col.replace('_', ' ').title(), color=color, linewidth=2)
+    
+    ax.set_xlabel('Block Number')
+    ax.set_ylabel('Number of Votes')
+    ax.set_title('Yes/No Votes per Block (Rolling Average)')
+    ax.legend()
+    ax.grid(True, linestyle='--', alpha=0.7)
+    save_plot(fig, os.path.join(output_dir, 'yes_no_votes_per_block_avg.png'))
+
 def main():
     output_dir = 'results'
     os.makedirs(output_dir, exist_ok=True)
@@ -195,8 +299,12 @@ def main():
     df['total_votes'] = df['honest_votes'] + df['malicious_votes']
     
     # Generate all plots
-    plot_honest_vs_malicious(df, output_dir)
-    plot_yes_no_votes(df, output_dir)
+    plot_honest_vs_malicious_per_block(df, output_dir)
+    plot_yes_no_votes_per_block(df, output_dir)
+    plot_honest_vs_malicious_per_block_avg(df, output_dir)
+    plot_yes_no_votes_per_block_avg(df, output_dir)
+    plot_honest_vs_malicious_per_blob(df, output_dir)
+    plot_yes_no_votes_per_blob(df, output_dir)
     plot_vote_distribution(df, output_dir)
     plot_proposer_distribution(df, output_dir)
     plot_voting_pattern_heatmap(df, output_dir)
