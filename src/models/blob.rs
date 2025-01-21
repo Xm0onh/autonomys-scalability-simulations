@@ -17,4 +17,4 @@ impl Blob {
             proposer_status: "honest".to_string(),
         }
     }
-} 
+}

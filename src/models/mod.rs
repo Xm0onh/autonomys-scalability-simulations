@@ -1,7 +1,7 @@
-mod settings;
 mod blob;
 mod block;
+mod settings;
 
-pub use settings::Settings;
 pub use blob::Blob;
-pub use block::Block; 
+pub use block::Block;
+pub use settings::Settings;

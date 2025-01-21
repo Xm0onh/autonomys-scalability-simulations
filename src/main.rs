@@ -10,7 +10,7 @@ fn print_usage() {
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    
+
     match args.get(1).map(|s| s.as_str()) {
         Some("basic") => scenarios::basic::run(),
         Some("vote_censorship") => scenarios::vote_censorship::run(),
