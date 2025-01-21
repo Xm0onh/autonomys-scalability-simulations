@@ -3,6 +3,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 
+THRESHOLD = 3000
+WINDOW = 50
+
 def read_and_parse_data(filename):
     # Read the text file and parse the table
     with open(filename, 'r') as f:
@@ -137,6 +140,8 @@ def plot_honest_vs_malicious_per_blob(df, output_dir):
         ax.plot(blob_votes['blob_id'], blob_votes[col], 
                 label=col.replace('_', ' ').title(), color=color, marker='o')
     
+    ax.axhline(y=THRESHOLD, color='black', linestyle='--', label=f'Threshold ({THRESHOLD:.2f})')
+    
     ax.set_xlabel('Blob ID')
     ax.set_ylabel('Number of Votes')
     ax.set_title('Total Votes per Blob')
@@ -240,15 +245,14 @@ def plot_honest_vs_malicious_per_block_avg(df, output_dir):
     }).reset_index()
     
     block_votes['total_votes'] = block_votes['honest_votes'] + block_votes['malicious_votes']
-    
+        
     # Calculate rolling averages
-    window = 10  # Adjust window size as needed
     for col, color in [('honest_votes', 'green'), ('malicious_votes', 'red'), ('total_votes', 'blue')]:
         # Plot scattered points with low alpha
         ax.scatter(block_votes['block_number'], block_votes[col], 
                   color=color, alpha=0.2, s=20)
         # Plot rolling average line
-        rolling_avg = block_votes[col].rolling(window=window, center=True).mean()
+        rolling_avg = block_votes[col].rolling(window=WINDOW, center=True).mean()
         ax.plot(block_votes['block_number'], rolling_avg,
                 label=col.replace('_', ' ').title(), color=color, linewidth=2)
     
@@ -274,13 +278,12 @@ def plot_yes_no_votes_per_block_avg(df, output_dir):
     yes_no_votes['total_votes'] = yes_no_votes['yes_votes'] + yes_no_votes['no_votes']
     
     # Calculate rolling averages
-    window = 5  # Adjust window size as needed
     for col, color in [('yes_votes', 'green'), ('no_votes', 'red'), ('total_votes', 'blue')]:
         # Plot scattered points with low alpha
         ax.scatter(yes_no_votes['block_number'], yes_no_votes[col],
                   color=color, alpha=0.2, s=20)
         # Plot rolling average line
-        rolling_avg = yes_no_votes[col].rolling(window=window, center=True).mean()
+        rolling_avg = yes_no_votes[col].rolling(window=WINDOW, center=True).mean()
         ax.plot(yes_no_votes['block_number'], rolling_avg,
                 label=col.replace('_', ' ').title(), color=color, linewidth=2)
     

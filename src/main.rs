@@ -153,7 +153,7 @@ fn main() {
             let mut votes = Vec::with_capacity(selected_nodes.len());
             
             for &node in &selected_nodes {
-                let vote = if honest_nodes.contains(&node) {
+                let vote = if honest_nodes.contains(&node) && honest_nodes.contains(&block_proposer) {
                     blobs.get_mut(&blob_id).unwrap().votes_honest += 1;
                     true
                 } else if malicious_nodes.contains(&node) {
