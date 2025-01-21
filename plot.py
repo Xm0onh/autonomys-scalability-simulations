@@ -1,7 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-import numpy as np
 import os
 
 def read_and_parse_data(filename):
@@ -182,7 +181,7 @@ def print_stats_summary(blob_stats, block_stats, df, vote_columns, vote_corr):
     print(f"Average blobs per block: {df['blob_id'].nunique() / df['block_number'].nunique():.2f}")
 
     print("\nVoting Patterns:")
-    print(f"Total voters: {len(vote_columns)}")
+    print(f"Total voters per block: {len(vote_columns)}")
     print(f"Total votes recorded: {df['total_votes'].sum()}")
 
     print("\nVote Correlation Summary:")
