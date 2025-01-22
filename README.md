@@ -35,6 +35,9 @@ Then, find the results in the `results` folder.
 
 #### Note: the name of results file for each scenario is `simulation_results_<scenario>.csv`. Update the `plot.py` file to use the correct file name.
 
+```python
+df = read_detailed_data('simulation_results_<scenario>.csv')
+```
 
 
 

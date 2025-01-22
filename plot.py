@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 
-# Add global font size settings
 plt.rcParams.update({
     'font.size': 12,
     'axes.titlesize': 16,
@@ -19,11 +18,9 @@ def read_detailed_data(file_path='simulation_results_vc.csv'):
     """Read the detailed per-block, per-blob voting data"""
     df = pd.read_csv(file_path)
     
-    # Extract proposer info from the combined column
     df['proposer_id'] = df['Proposer(Status)'].str.extract(r'(\d+)').astype(int)
     df['proposer_type'] = df['Proposer(Status)'].str.extract(r'\((.*?)\)')[0]
     
-    # Rename columns to match existing code
     df = df.rename(columns={
         'Block': 'block_number',
         'Blob ID': 'blob_id',
@@ -37,7 +34,6 @@ def plot_votes_per_block(df, output_dir):
     """Plot honest vs malicious votes per block with rolling average"""
     fig, ax = plt.subplots(figsize=(15, 8))
     
-    # Group by block number
     block_votes = df.groupby('block_number').agg({
         'honest_votes': 'sum',
         'malicious_votes': 'sum'
@@ -45,13 +41,11 @@ def plot_votes_per_block(df, output_dir):
     
     block_votes['total_votes'] = block_votes['honest_votes'] + block_votes['malicious_votes']
     
-    # Plot both raw data (scattered) and rolling averages
     for col, color, label in [
         ('honest_votes', 'green', 'Honest Votes'),
         ('malicious_votes', 'red', 'Malicious Votes'),
         ('total_votes', 'blue', 'Total Votes')
     ]:
-        # Scatter plot for raw data
         ax.scatter(block_votes['block_number'], block_votes[col], 
                   color=color, alpha=0.2, s=20)
         
@@ -105,11 +99,9 @@ def plot_proposer_distribution(df, output_dir):
     """Plot distribution of honest vs malicious proposers"""
     fig, ax = plt.subplots(figsize=(10, 6))
     
-    # Get unique proposers per block and count their types
     proposer_counts = df.groupby('block_number')['proposer_type'].first().value_counts().reset_index()
     proposer_counts.columns = ['proposer_type', 'count']
     
-    # Create the bar plot
     sns.barplot(data=proposer_counts, 
                 x='proposer_type', 
                 y='count',
@@ -128,7 +120,6 @@ def plot_proposer_distribution(df, output_dir):
 
 def plot_vote_patterns(df, output_dir):
     """Create a heatmap of voting patterns"""
-    # Group by blob_id and create vote matrix
     vote_matrix = df.groupby('blob_id').agg({
         'honest_votes': 'sum',
         'malicious_votes': 'sum'
@@ -141,7 +132,6 @@ def plot_vote_patterns(df, output_dir):
                 ax=ax,
                 cbar_kws={'label': 'Number of Votes'})
     
-    # Set colorbar label size after creating the heatmap
     ax.collections[0].colorbar.ax.set_ylabel('Number of Votes', fontsize=12)
     
     ax.set_ylabel('Blob ID', fontsize=14)
@@ -198,20 +188,16 @@ def print_statistics(df):
     print(f"Max: {blob_stats['malicious_votes']['max'].max()}")
 
 def main():
-    # Create output directory
     output_dir = 'results'
     os.makedirs(output_dir, exist_ok=True)
     
-    # Read data
     df = read_detailed_data('simulation_results_vc.csv')
     
-    # Generate plots
     plot_votes_per_block(df, output_dir)
     plot_votes_per_blob(df, output_dir)
     plot_proposer_distribution(df, output_dir)
     plot_vote_patterns(df, output_dir)
     
-    # Print statistics
     print_statistics(df)
 
 if __name__ == "__main__":
