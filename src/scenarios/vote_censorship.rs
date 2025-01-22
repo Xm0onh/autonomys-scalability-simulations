@@ -1,7 +1,7 @@
 use rand::seq::SliceRandom;
 use sim::{
     models::{Blob, Block, Settings},
-    utils::create_results_table,
+    utils::{create_results_table, create_voting_summary_per_block},
 };
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
@@ -46,23 +46,37 @@ pub fn run() {
             .collect();
 
         // Create votes for each unconfirmed blob
-        let mut block_votes: HashMap<usize, Vec<bool>> = HashMap::new();
+        let mut block_votes: HashMap<usize, Vec<Option<bool>>> = HashMap::new();
 
         for &blob_id in &unconfirmed_blobs {
-            let mut votes = Vec::with_capacity(selected_nodes.len());
+            let mut votes = Vec::new();
 
             for &node in &selected_nodes {
-                let vote = if honest_nodes.contains(&node) && honest_nodes.contains(&block_proposer)
-                {
-                    blobs.get_mut(&blob_id).unwrap().votes_honest += 1;
-                    true
+                // Only record votes if the proposer is honest
+                let vote = if honest_nodes.contains(&node) {
+                    if !honest_nodes.contains(&block_proposer) {
+                        None
+                    } else {
+                        blobs.get_mut(&blob_id).unwrap().votes_honest += 1;
+                        Some(true)
+                    }
                 } else {
                     blobs.get_mut(&blob_id).unwrap().votes_malicious += 1;
-                    false
+                    Some(false)
                 };
                 votes.push(vote);
             }
-
+            println!(
+                "Blob ID: {}, Votes: {:?}, size of votes: {}, block_proposer: {}",
+                blob_id,
+                votes,
+                votes.len(),
+                block_proposer
+            );
+            // printing selected_nodes
+            println!("Selected nodes: {:?}", selected_nodes);
+            // wait for 1 second
+            // std::thread::sleep(std::time::Duration::from_secs(1));
             block_votes.insert(blob_id, votes);
         }
 
@@ -85,9 +99,14 @@ pub fn run() {
     }
 
     let table = create_results_table(&blocks, &honest_nodes);
+    let summary_table = create_voting_summary_per_block(&blocks, &honest_nodes);
 
     let mut file = File::create("simulation_results.txt").expect("Unable to create file");
-    write!(file, "{}", table.to_string()).expect("Unable to write table");
+    write!(file, "{}", table.to_string(),).expect("Unable to write table");
 
+    let mut file = File::create("simulation_results_per_block.txt").expect("Unable to create file");
+    write!(file, "{}", summary_table.to_string()).expect("Unable to write table");
+    // // print the blobs 0
+    println!("Blob 0: {:?}", blobs.get(&0).unwrap());
     println!("Simulation complete. Results written to 'simulation_results.txt'.");
 }

@@ -46,7 +46,7 @@ pub fn run() {
             .collect();
 
         // Create votes for each unconfirmed blob
-        let mut block_votes: HashMap<usize, Vec<bool>> = HashMap::new();
+        let mut block_votes: HashMap<usize, Vec<Option<bool>>> = HashMap::new();
 
         for &blob_id in &unconfirmed_blobs {
             let mut votes = Vec::with_capacity(selected_nodes.len());
@@ -54,10 +54,10 @@ pub fn run() {
             for &node in &selected_nodes {
                 let vote = if honest_nodes.contains(&node) {
                     blobs.get_mut(&blob_id).unwrap().votes_honest += 1;
-                    true
+                    Some(true)
                 } else {
                     blobs.get_mut(&blob_id).unwrap().votes_malicious += 1;
-                    false
+                    Some(false)
                 };
                 votes.push(vote);
             }
