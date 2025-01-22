@@ -1,6 +1,6 @@
-use crate::models::Block;
+use crate::models::{Blob, Block};
 use prettytable::{format, Cell, Row, Table};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 // General table for different scenarios
 pub fn create_results_table(blocks: &[Block], honest_nodes: &HashSet<usize>) -> Table {
@@ -124,6 +124,34 @@ pub fn create_voting_summary_per_block(blocks: &[Block], honest_nodes: &HashSet<
             Cell::new(&block_total_votes.to_string()),
             Cell::new(&block_honest_votes.to_string()),
             Cell::new(&block_malicious_votes.to_string()),
+        ]));
+    }
+
+    table
+}
+
+pub fn create_voting_summary_per_blob(blobs: &HashMap<usize, Blob>) -> Table {
+    let mut table = Table::new();
+    table.set_format(*format::consts::FORMAT_BOX_CHARS);
+
+    // Add headers
+    table.add_row(Row::new(vec![
+        Cell::new("Blob"),
+        Cell::new("Blob Proposer Status"),
+        Cell::new("Total Votes"),
+        Cell::new("Honest Votes"),
+        Cell::new("Malicious Votes"),
+    ]));
+
+    // Process each block
+    for (blob_id, blob) in blobs {
+        // Add block summary row
+        table.add_row(Row::new(vec![
+            Cell::new(&blob_id.to_string()),
+            Cell::new(&blob.proposer_status.to_string()),
+            Cell::new(&(blob.votes_honest + blob.votes_malicious).to_string()),
+            Cell::new(&blob.votes_honest.to_string()),
+            Cell::new(&blob.votes_malicious.to_string()),
         ]));
     }
 
