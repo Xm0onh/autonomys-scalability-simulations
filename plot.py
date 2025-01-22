@@ -118,30 +118,6 @@ def plot_proposer_distribution(df, output_dir):
     plt.savefig(os.path.join(output_dir, 'proposer_distribution.png'), dpi=300, bbox_inches='tight')
     plt.close()
 
-def plot_vote_patterns(df, output_dir):
-    """Create a heatmap of voting patterns"""
-    vote_matrix = df.groupby('blob_id').agg({
-        'honest_votes': 'sum',
-        'malicious_votes': 'sum'
-    }).values
-    
-    fig, ax = plt.subplots(figsize=(10, 8))
-    sns.heatmap(vote_matrix, 
-                cmap='YlOrRd',
-                xticklabels=['Honest', 'Malicious'],
-                ax=ax,
-                cbar_kws={'label': 'Number of Votes'})
-    
-    ax.collections[0].colorbar.ax.set_ylabel('Number of Votes', fontsize=12)
-    
-    ax.set_ylabel('Blob ID', fontsize=14)
-    ax.set_title('Voting Pattern Heatmap', fontsize=16)
-    ax.tick_params(labelsize=12)
-    
-    plt.tight_layout()
-    plt.savefig(os.path.join(output_dir, 'vote_patterns_heatmap.png'), dpi=300, bbox_inches='tight')
-    plt.close()
-
 def print_statistics(df):
     """Print comprehensive statistics about the simulation"""
     print("\n=== Simulation Statistics ===\n")
@@ -196,7 +172,6 @@ def main():
     plot_votes_per_block(df, output_dir)
     plot_votes_per_blob(df, output_dir)
     plot_proposer_distribution(df, output_dir)
-    plot_vote_patterns(df, output_dir)
     
     print_statistics(df)
 
