@@ -131,6 +131,10 @@ pub fn create_voting_summary_per_block(blocks: &[Block], honest_nodes: &HashSet<
 }
 
 pub fn create_voting_summary_per_blob(blobs: &HashMap<usize, Blob>) -> Table {
+    // first sort blobs by their id 
+    let mut blobs: Vec<Blob> = blobs.values().cloned().collect();
+    blobs.sort_by_key(|blob| blob.id);
+
     let mut table = Table::new();
     table.set_format(*format::consts::FORMAT_BOX_CHARS);
 
@@ -144,10 +148,10 @@ pub fn create_voting_summary_per_blob(blobs: &HashMap<usize, Blob>) -> Table {
     ]));
 
     // Process each block
-    for (blob_id, blob) in blobs {
+    for blob in blobs {
         // Add block summary row
         table.add_row(Row::new(vec![
-            Cell::new(&blob_id.to_string()),
+            Cell::new(&blob.id.to_string()),
             Cell::new(&blob.proposer_status.to_string()),
             Cell::new(&(blob.votes_honest + blob.votes_malicious).to_string()),
             Cell::new(&blob.votes_honest.to_string()),

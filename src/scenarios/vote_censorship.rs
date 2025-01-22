@@ -98,6 +98,7 @@ pub fn run() {
         File::create("simulation_results_per_block_vc.txt").expect("Unable to create file");
     write!(file, "{}", block_table.to_string()).expect("Unable to write table");
 
+    // sort blobs by their id 
     let blob_table = create_voting_summary_per_blob(&blobs);
     let mut file =
         File::create("simulation_results_per_blob_vc.txt").expect("Unable to create file");

@@ -7,3 +7,5 @@ venv
 config.toml
 *.txt
 results/
+
+.DS_Store
