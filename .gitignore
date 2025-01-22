@@ -6,6 +6,7 @@ venv
 
 config.toml
 *.txt
+!requirements.txt
 results/
 
 .DS_Store
