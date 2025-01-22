@@ -70,6 +70,7 @@ pub fn run() {
             proposer: *block_proposer,
             selected_nodes,
             votes: block_votes,
+            buffered_votes: HashMap::new(),
         };
 
         if block.number >= config.confirmation_depth {

@@ -110,11 +110,16 @@ pub fn create_voting_summary_per_block(blocks: &[Block], honest_nodes: &HashSet<
             block_total_votes += blob_votes.iter().filter(|vote| vote.is_some()).count();
 
             // Count honest and malicious votes
-            for (i, _) in blob_votes.iter().enumerate() {
+            for (i, vote) in blob_votes.iter().enumerate() {
+                if i >= block.selected_nodes.len() {
+                    break;
+                }
                 let voter = block.selected_nodes[i];
-                if honest_nodes.contains(&voter) && blob_votes[i].is_some() {
-                    block_honest_votes += 1;
-                } else if !honest_nodes.contains(&voter) && blob_votes[i].is_some() {
+                if honest_nodes.contains(&voter) {
+                    if vote.is_some() {
+                        block_honest_votes += 1;
+                    }
+                } else if vote.is_some() {
                     block_malicious_votes += 1;
                 }
             }

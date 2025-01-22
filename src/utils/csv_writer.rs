@@ -31,16 +31,14 @@ pub fn create_results_csv<W: Write>(
                 .enumerate()
                 .map(|(i, &node)| {
                     let is_honest = honest_nodes.contains(&node);
-                    let vote = blob_votes[i];
+                    let vote = blob_votes.get(i).cloned().flatten();
 
                     if is_honest {
                         if vote.is_some() {
                             honest_count += 1;
                         }
-                    } else {
-                        if vote.is_some() {
-                            malicious_count += 1;
-                        }
+                    } else if vote.is_some() {
+                        malicious_count += 1;
                     }
 
                     format!(
