@@ -5,47 +5,23 @@ import os
 
 WINDOW = 50  # For rolling averages
 
-def read_detailed_data(file_path='simulation_results_vc.txt'):
+def read_detailed_data(file_path='simulation_results_vc.csv'):
     """Read the detailed per-block, per-blob voting data"""
-    df = pd.DataFrame()
-    current_block = None
-    rows = []
+    df = pd.read_csv(file_path)
     
-    with open(file_path, 'r') as f:
-        for line in f:
-            # Skip header/separator lines and empty lines
-            if ('│' not in line or 
-                any(x in line for x in ['┌', '├', '└', '┐', '┘']) or 
-                'Block' in line):  # Skip header row
-                continue
-                
-            parts = [p.strip() for p in line.split('│')[1:-1]]
-            if len(parts) < 5:
-                continue
-                
-            try:
-                block_num = int(parts[0])
-                proposer_info = parts[1]
-                proposer_id = int(proposer_info.split('(')[0])
-                proposer_type = 'honest' if 'honest' in proposer_info.lower() else 'malicious'
-                blob_id = int(parts[2])
-                honest_votes = int(parts[-2])
-                malicious_votes = int(parts[-1])
-                
-                rows.append({
-                    'block_number': block_num,
-                    'proposer_id': proposer_id,
-                    'proposer_type': proposer_type,
-                    'blob_id': blob_id,
-                    'honest_votes': honest_votes,
-                    'malicious_votes': malicious_votes,
-                    'total_votes': honest_votes + malicious_votes
-                })
-            except ValueError as e:
-                print(f"Skipping line due to parsing error: {e}")
-                continue
+    # Extract proposer info from the combined column
+    df['proposer_id'] = df['Proposer(Status)'].str.extract(r'(\d+)').astype(int)
+    df['proposer_type'] = df['Proposer(Status)'].str.extract(r'\((.*?)\)')[0]
     
-    return pd.DataFrame(rows)
+    # Rename columns to match existing code
+    df = df.rename(columns={
+        'Block': 'block_number',
+        'Blob ID': 'blob_id',
+        'Honest Votes': 'honest_votes',
+        'Malicious Votes': 'malicious_votes'
+    })
+    
+    return df
 
 def plot_votes_per_block(df, output_dir):
     """Plot honest vs malicious votes per block with rolling average"""
@@ -146,14 +122,14 @@ def plot_vote_patterns(df, output_dir):
     }).values
     
     fig, ax = plt.subplots(figsize=(10, 8))
-    sns.heatmap(vote_matrix[:50],  # Show first 50 blobs for visibility
+    sns.heatmap(vote_matrix, 
                 cmap='YlOrRd',
                 xticklabels=['Honest', 'Malicious'],
                 ax=ax,
                 cbar_kws={'label': 'Number of Votes'})
     
     ax.set_ylabel('Blob ID')
-    ax.set_title('Voting Pattern Heatmap (First 50 Blobs)')
+    ax.set_title('Voting Pattern Heatmap')
     
     plt.tight_layout()
     plt.savefig(os.path.join(output_dir, 'vote_patterns_heatmap.png'), dpi=300, bbox_inches='tight')
@@ -210,7 +186,7 @@ def main():
     os.makedirs(output_dir, exist_ok=True)
     
     # Read data
-    df = read_detailed_data('simulation_results_vc.txt')
+    df = read_detailed_data('simulation_results_vc.csv')
     
     # Generate plots
     plot_votes_per_block(df, output_dir)

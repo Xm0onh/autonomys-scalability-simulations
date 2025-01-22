@@ -1,13 +1,14 @@
 use rand::seq::SliceRandom;
 use sim::{
     models::{Blob, Block, Settings},
+    utils::csv_writer::create_results_csv,
     utils::{
-        create_results_table, create_voting_summary_per_blob, create_voting_summary_per_block,
+        create_voting_summary_per_blob, create_voting_summary_per_block, write_table_buffered,
     },
 };
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
-use std::io::Write;
+use std::io::BufWriter;
 
 #[allow(dead_code)]
 pub fn run() {
@@ -89,20 +90,24 @@ pub fn run() {
         blocks.push(block);
     }
 
-    let general_table = create_results_table(&blocks, &honest_nodes);
-    let mut file = File::create("simulation_results_vc.txt").expect("Unable to create file");
-    write!(file, "{}", general_table.to_string()).expect("Unable to write table");
+    // let file = File::create("simulation_results_vc.txt").expect("Unable to create file");
+    // let mut writer = BufWriter::new(file);
+    // let table = create_results_table(&blocks, &honest_nodes);
+    // write_table_buffered(&table, &mut writer).expect("Unable to write table");
 
-    let block_table = create_voting_summary_per_block(&blocks, &honest_nodes);
-    let mut file =
-        File::create("simulation_results_per_block_vc.txt").expect("Unable to create file");
-    write!(file, "{}", block_table.to_string()).expect("Unable to write table");
+    let file = File::create("simulation_results_per_block_vc.txt").expect("Unable to create file");
+    let mut writer = BufWriter::new(file);
+    let table = create_voting_summary_per_block(&blocks, &honest_nodes);
+    write_table_buffered(&table, &mut writer).expect("Unable to write table");
 
-    // sort blobs by their id 
-    let blob_table = create_voting_summary_per_blob(&blobs);
-    let mut file =
-        File::create("simulation_results_per_blob_vc.txt").expect("Unable to create file");
-    write!(file, "{}", blob_table.to_string()).expect("Unable to write table");
+    let file = File::create("simulation_results_per_blob_vc.txt").expect("Unable to create file");
+    let mut writer = BufWriter::new(file);
+    let table = create_voting_summary_per_blob(&blobs);
+    write_table_buffered(&table, &mut writer).expect("Unable to write table");
 
-    println!("Simulation complete. Results written to 'simulation_results.txt'.");
+    let file = File::create("simulation_results_vc.csv").expect("Unable to create file");
+    let mut writer = BufWriter::new(file);
+    create_results_csv(&blocks, &honest_nodes, &mut writer).expect("Unable to write CSV");
+
+    println!("Simulation complete. Results written to 'simulation_results_vc.txt' and 'simulation_results_per_block_vc.txt' and 'simulation_results_per_blob_vc.txt'.");
 }

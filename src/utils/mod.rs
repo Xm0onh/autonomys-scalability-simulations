@@ -1,6 +1,9 @@
 use crate::models::{Blob, Block};
 use prettytable::{format, Cell, Row, Table};
 use std::collections::{HashMap, HashSet};
+use std::io::{BufWriter, Write};
+
+pub mod csv_writer;
 
 // General table for different scenarios
 pub fn create_results_table(blocks: &[Block], honest_nodes: &HashSet<usize>) -> Table {
@@ -131,7 +134,7 @@ pub fn create_voting_summary_per_block(blocks: &[Block], honest_nodes: &HashSet<
 }
 
 pub fn create_voting_summary_per_blob(blobs: &HashMap<usize, Blob>) -> Table {
-    // first sort blobs by their id 
+    // first sort blobs by their id
     let mut blobs: Vec<Blob> = blobs.values().cloned().collect();
     blobs.sort_by_key(|blob| blob.id);
 
@@ -160,4 +163,13 @@ pub fn create_voting_summary_per_blob(blobs: &HashMap<usize, Blob>) -> Table {
     }
 
     table
+}
+
+pub fn write_table_buffered<W: Write>(
+    table: &Table,
+    writer: &mut BufWriter<W>,
+) -> std::io::Result<()> {
+    write!(writer, "{}", table.to_string())?;
+    writer.flush()?;
+    Ok(())
 }
