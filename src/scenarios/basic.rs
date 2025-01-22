@@ -1,7 +1,6 @@
 use rand::seq::SliceRandom;
 use sim::{
     models::{Blob, Block, Settings},
-    utils::create_results_table,
     utils::csv_writer::create_results_csv,
 };
 use std::collections::{HashMap, HashSet};
@@ -89,5 +88,5 @@ pub fn run() {
     let mut writer = BufWriter::new(file);
     create_results_csv(&blocks, &honest_nodes, &mut writer).expect("Unable to write CSV");
 
-    println!("Simulation complete. Results written to 'simulation_results.txt'.");
+    println!("Simulation complete. Results written to 'simulation_results_basic.txt'.");
 }
