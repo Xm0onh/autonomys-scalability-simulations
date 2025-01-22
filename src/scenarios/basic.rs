@@ -2,10 +2,11 @@ use rand::seq::SliceRandom;
 use sim::{
     models::{Blob, Block, Settings},
     utils::create_results_table,
+    utils::csv_writer::create_results_csv,
 };
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
-use std::io::Write;
+use std::io::BufWriter;
 
 #[allow(dead_code)]
 pub fn run() {
@@ -83,10 +84,10 @@ pub fn run() {
         blocks.push(block);
     }
 
-    let table = create_results_table(&blocks, &honest_nodes);
-
-    let mut file = File::create("simulation_results.txt").expect("Unable to create file");
-    write!(file, "{}", table.to_string()).expect("Unable to write table");
+    
+    let file = File::create("simulation_results.csv").expect("Unable to create file");
+    let mut writer = BufWriter::new(file);
+    create_results_csv(&blocks, &honest_nodes, &mut writer).expect("Unable to write CSV");
 
     println!("Simulation complete. Results written to 'simulation_results.txt'.");
 }

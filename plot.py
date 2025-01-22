@@ -3,6 +3,16 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 
+# Add global font size settings
+plt.rcParams.update({
+    'font.size': 12,
+    'axes.titlesize': 16,
+    'axes.labelsize': 14,
+    'xtick.labelsize': 12,
+    'ytick.labelsize': 12,
+    'legend.fontsize': 12
+})
+
 WINDOW = 50  # For rolling averages
 
 def read_detailed_data(file_path='simulation_results_vc.csv'):
@@ -50,10 +60,11 @@ def plot_votes_per_block(df, output_dir):
         ax.plot(block_votes['block_number'], rolling_avg,
                 label=label, color=color, linewidth=2)
     
-    ax.set_xlabel('Block Number')
-    ax.set_ylabel('Number of Votes')
-    ax.set_title('Votes per Block (with Rolling Average)')
-    ax.legend()
+    ax.set_xlabel('Block Number', fontsize=14)
+    ax.set_ylabel('Number of Votes', fontsize=14)
+    ax.set_title('Votes per Block (with Rolling Average)', fontsize=16)
+    ax.legend(fontsize=12)
+    ax.tick_params(labelsize=12)
     ax.grid(True, linestyle='--', alpha=0.7)
     
     plt.tight_layout()
@@ -79,10 +90,11 @@ def plot_votes_per_blob(df, output_dir):
         ax.plot(blob_votes['blob_id'], blob_votes[col],
                 label=label, color=color, marker='o', markersize=4)
     
-    ax.set_xlabel('Blob ID')
-    ax.set_ylabel('Number of Votes')
-    ax.set_title('Votes per Blob')
-    ax.legend()
+    ax.set_xlabel('Blob ID', fontsize=14)
+    ax.set_ylabel('Number of Votes', fontsize=14)
+    ax.set_title('Votes per Blob', fontsize=16)
+    ax.legend(fontsize=12)
+    ax.tick_params(labelsize=12)
     ax.grid(True, linestyle='--', alpha=0.7)
     
     plt.tight_layout()
@@ -104,9 +116,10 @@ def plot_proposer_distribution(df, output_dir):
                 palette={'honest': 'green', 'malicious': 'red'},
                 ax=ax)
     
-    ax.set_xlabel('Proposer Type')
-    ax.set_ylabel('Number of Blocks Proposed')
-    ax.set_title('Distribution of Block Proposers')
+    ax.set_xlabel('Proposer Type', fontsize=14)
+    ax.set_ylabel('Number of Blocks Proposed', fontsize=14)
+    ax.set_title('Distribution of Block Proposers', fontsize=16)
+    ax.tick_params(labelsize=12)
     ax.grid(True, linestyle='--', alpha=0.7)
     
     plt.tight_layout()
@@ -128,8 +141,12 @@ def plot_vote_patterns(df, output_dir):
                 ax=ax,
                 cbar_kws={'label': 'Number of Votes'})
     
-    ax.set_ylabel('Blob ID')
-    ax.set_title('Voting Pattern Heatmap')
+    # Set colorbar label size after creating the heatmap
+    ax.collections[0].colorbar.ax.set_ylabel('Number of Votes', fontsize=12)
+    
+    ax.set_ylabel('Blob ID', fontsize=14)
+    ax.set_title('Voting Pattern Heatmap', fontsize=16)
+    ax.tick_params(labelsize=12)
     
     plt.tight_layout()
     plt.savefig(os.path.join(output_dir, 'vote_patterns_heatmap.png'), dpi=300, bbox_inches='tight')
