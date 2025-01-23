@@ -69,7 +69,7 @@ pub fn run() {
             }
             for &node in &selected_nodes {
                 // Only record votes if the proposer is honest
-                let vote = if honest_nodes.contains(&node) {
+                let vote = if honest_nodes.contains(&node) && block < config.k_f {
                     if !honest_nodes.contains(&block_proposer) {
                         // If proposer is malicious, buffer the vote
                         buffer_votes

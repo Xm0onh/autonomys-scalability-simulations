@@ -9,6 +9,7 @@ pub struct Settings {
     pub malicious_power_block: usize,
     pub total_blocks: usize,
     pub reliable_nodes: usize,
+    pub k_f: usize,
 }
 
 impl Settings {
