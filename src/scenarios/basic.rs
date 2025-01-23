@@ -84,7 +84,6 @@ pub fn run() {
         blocks.push(block);
     }
 
-    
     let file = File::create("simulation_results.csv").expect("Unable to create file");
     let mut writer = BufWriter::new(file);
     create_results_csv(&blocks, &honest_nodes, &mut writer).expect("Unable to write CSV");

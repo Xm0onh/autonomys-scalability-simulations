@@ -57,13 +57,25 @@ pub fn run() {
 
         for &blob_id in &unconfirmed_blobs {
             let mut votes = Vec::new();
+            // delete the confirmed blobs from the buffer
+            let to_remove: Vec<_> = buffer_votes
+                .keys()
+                .filter(|&blob_id| blobs.get(blob_id).unwrap().is_confirmed)
+                .copied()
+                .collect();
 
+            for blob_id in to_remove {
+                buffer_votes.remove(&blob_id);
+            }
             for &node in &selected_nodes {
                 // Only record votes if the proposer is honest
                 let vote = if honest_nodes.contains(&node) {
                     if !honest_nodes.contains(&block_proposer) {
                         // If proposer is malicious, buffer the vote
-                        buffer_votes.entry(blob_id).or_insert(Vec::new()).push(Some(true));
+                        buffer_votes
+                            .entry(blob_id)
+                            .or_insert(Vec::new())
+                            .push(Some(true));
                         total_honest_votes += 1;
                         None
                     } else {
@@ -75,7 +87,6 @@ pub fn run() {
                                 }
                             }
                         }
-                        buffer_votes.clear();
                         blobs.get_mut(&blob_id).unwrap().votes_honest += 1;
                         total_honest_votes += 1;
                         Some(true)
@@ -87,17 +98,30 @@ pub fn run() {
                 };
                 votes.push(vote);
             }
-            
+
             block_votes.insert(blob_id, votes);
         }
 
-        let block = sim::models::Block {
-            number: block,
-            proposer: *block_proposer,
-            selected_nodes,
-            votes: block_votes,
-            buffered_votes: buffer_votes.clone(),
+        let block = if honest_nodes.contains(&block_proposer) {
+            sim::models::Block {
+                number: block,
+                proposer: *block_proposer,
+                selected_nodes,
+                votes: block_votes,
+                buffered_votes: buffer_votes.clone(),
+            }
+        } else {
+            sim::models::Block {
+                number: block,
+                proposer: *block_proposer,
+                selected_nodes,
+                votes: block_votes,
+                buffered_votes: HashMap::new(),
+            }
         };
+        if honest_nodes.contains(&block_proposer) {
+            buffer_votes.clear();
+        }
 
         if block.number >= config.confirmation_depth {
             let confirmed_blob_id = block.number - config.confirmation_depth;
