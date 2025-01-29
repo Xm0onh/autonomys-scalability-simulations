@@ -25,22 +25,21 @@ pub fn create_results_csv<W: Write>(
             let mut honest_count = 0;
             let mut malicious_count = 0;
 
-            let votes: Vec<String> = block
+            // Process regular votes
+            let mut votes: Vec<String> = block
                 .selected_nodes
                 .iter()
                 .enumerate()
                 .map(|(i, &node)| {
                     let is_honest = honest_nodes.contains(&node);
-                    let vote = blob_votes[i];
+                    let vote = blob_votes.get(i).cloned().flatten();
 
                     if is_honest {
                         if vote.is_some() {
                             honest_count += 1;
                         }
-                    } else {
-                        if vote.is_some() {
-                            malicious_count += 1;
-                        }
+                    } else if vote.is_some() {
+                        malicious_count += 1;
                     }
 
                     format!(
@@ -50,6 +49,16 @@ pub fn create_results_csv<W: Write>(
                     )
                 })
                 .collect();
+
+            // Add buffered votes to the same counts
+            if let Some(buffered) = block.buffered_votes.get(blob_id) {
+                for vote in buffered {
+                    if vote.is_some() {
+                        honest_count += 1;
+                        votes.push("1(honest)".to_string());
+                    }
+                }
+            }
 
             let votes_str = votes
                 .iter()

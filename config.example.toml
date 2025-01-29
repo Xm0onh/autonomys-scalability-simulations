@@ -6,3 +6,4 @@ confirmation_depth = 100
 malicious_power_block = 0
 total_blocks = 100
 reliable_nodes = 1000 
+k_f = 40

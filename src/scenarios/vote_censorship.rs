@@ -14,6 +14,10 @@ use std::io::BufWriter;
 pub fn run() {
     let config = Settings::load("config");
     let mut rng = rand::thread_rng();
+    let mut total_honest_votes = 0;
+    let mut total_malicious_votes = 0;
+
+    let mut buffer_votes: HashMap<usize, Vec<Option<bool>>> = HashMap::new();
 
     let honest_nodes: HashSet<usize> = (0..(config.total_nodes - config.malicious_nodes)).collect();
     let _malicious_nodes: HashSet<usize> =
@@ -53,31 +57,71 @@ pub fn run() {
 
         for &blob_id in &unconfirmed_blobs {
             let mut votes = Vec::new();
+            // delete the confirmed blobs from the buffer
+            let to_remove: Vec<_> = buffer_votes
+                .keys()
+                .filter(|&blob_id| blobs.get(blob_id).unwrap().is_confirmed)
+                .copied()
+                .collect();
 
+            for blob_id in to_remove {
+                buffer_votes.remove(&blob_id);
+            }
             for &node in &selected_nodes {
                 // Only record votes if the proposer is honest
-                let vote = if honest_nodes.contains(&node) {
+                let vote = if honest_nodes.contains(&node) && block < config.k_f {
                     if !honest_nodes.contains(&block_proposer) {
+                        // If proposer is malicious, buffer the vote
+                        buffer_votes
+                            .entry(blob_id)
+                            .or_insert(Vec::new())
+                            .push(Some(true));
+                        total_honest_votes += 1;
                         None
                     } else {
+                        // If proposer is honest, include current vote and check buffered votes
+                        for (blob_id, buffered_votes) in &buffer_votes {
+                            for &vote in buffered_votes {
+                                if vote.is_some() {
+                                    blobs.get_mut(blob_id).unwrap().votes_honest += 1;
+                                }
+                            }
+                        }
                         blobs.get_mut(&blob_id).unwrap().votes_honest += 1;
+                        total_honest_votes += 1;
                         Some(true)
                     }
                 } else {
+                    total_malicious_votes += 1;
                     blobs.get_mut(&blob_id).unwrap().votes_malicious += 1;
                     Some(false)
                 };
                 votes.push(vote);
             }
+
             block_votes.insert(blob_id, votes);
         }
 
-        let block = sim::models::Block {
-            number: block,
-            proposer: *block_proposer,
-            selected_nodes,
-            votes: block_votes,
+        let block = if honest_nodes.contains(&block_proposer) {
+            sim::models::Block {
+                number: block,
+                proposer: *block_proposer,
+                selected_nodes,
+                votes: block_votes,
+                buffered_votes: buffer_votes.clone(),
+            }
+        } else {
+            sim::models::Block {
+                number: block,
+                proposer: *block_proposer,
+                selected_nodes,
+                votes: block_votes,
+                buffered_votes: HashMap::new(),
+            }
         };
+        if honest_nodes.contains(&block_proposer) {
+            buffer_votes.clear();
+        }
 
         if block.number >= config.confirmation_depth {
             let confirmed_blob_id = block.number - config.confirmation_depth;
@@ -89,11 +133,6 @@ pub fn run() {
         println!("Block Number: {}", block.number);
         blocks.push(block);
     }
-
-    // let file = File::create("simulation_results_vc.txt").expect("Unable to create file");
-    // let mut writer = BufWriter::new(file);
-    // let table = create_results_table(&blocks, &honest_nodes);
-    // write_table_buffered(&table, &mut writer).expect("Unable to write table");
 
     let file = File::create("simulation_results_per_block_vc.txt").expect("Unable to create file");
     let mut writer = BufWriter::new(file);
@@ -108,6 +147,10 @@ pub fn run() {
     let file = File::create("simulation_results_vc.csv").expect("Unable to create file");
     let mut writer = BufWriter::new(file);
     create_results_csv(&blocks, &honest_nodes, &mut writer).expect("Unable to write CSV");
+
+    println!("Total honest votes: {}", total_honest_votes);
+    println!("Total malicious votes: {}", total_malicious_votes);
+    println!("Buffer votes: {}", buffer_votes.len());
 
     println!("Simulation complete. Results written to 'simulation_results_vc.txt' and 'simulation_results_per_block_vc.txt' and 'simulation_results_per_blob_vc.txt'.");
 }
