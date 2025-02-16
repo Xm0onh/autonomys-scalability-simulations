@@ -167,7 +167,7 @@ def main():
     output_dir = 'results'
     os.makedirs(output_dir, exist_ok=True)
     
-    df = read_detailed_data('simulation_results_vc.csv')
+    df = read_detailed_data('simulation_results_data_withholding.csv')
     
     plot_votes_per_block(df, output_dir)
     plot_votes_per_blob(df, output_dir)

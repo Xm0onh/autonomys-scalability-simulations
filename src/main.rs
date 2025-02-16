@@ -6,6 +6,8 @@ fn print_usage() {
     println!("Available scenarios:");
     println!("  basic    - Basic simulation scenario");
     println!("  vote_censorship    - Vote censorship simulation scenario");
+    println!("  data_withholding    - Data withholding simulation scenario");
+    println!("  smart_data_withholding    - Smart data withholding simulation scenario");
 }
 
 fn main() {
@@ -15,6 +17,7 @@ fn main() {
         Some("basic") => scenarios::basic::run(),
         Some("vote_censorship") => scenarios::vote_censorship::run(),
         Some("data_withholding") => scenarios::data_withholding::run(),
+        Some("smart_data_withholding") => scenarios::smart_data_withholding::run(),
         Some(unknown_scenario) => {
             println!("Unknown scenario: {}", unknown_scenario);
             print_usage();
