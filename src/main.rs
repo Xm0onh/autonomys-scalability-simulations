@@ -14,6 +14,7 @@ fn main() {
     match args.get(1).map(|s| s.as_str()) {
         Some("basic") => scenarios::basic::run(),
         Some("vote_censorship") => scenarios::vote_censorship::run(),
+        Some("data_withholding") => scenarios::data_withholding::run(),
         Some(unknown_scenario) => {
             println!("Unknown scenario: {}", unknown_scenario);
             print_usage();
